@@ -4,15 +4,18 @@
 #include <iostream>
 
 #include "Particle.h"
+#include "Utils.h"
 
 #define PARRAYHEIGHT 100 //width of the array of particles
 #define PARRAYWIDTH 100 //height of the array of particles
 
-#define INITIAL_POS_X 20
-#define INITIAL_POS_Y 20
+#define INITIAL_POS_X 0
+#define INITIAL_POS_Y 0
 #define SPREAD 5 //distance between 2 particles next to each other
 
 using namespace std;
+
+
 
 int main()
 {
@@ -80,19 +83,27 @@ int main()
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 			zoom -= zoom*dt;
 
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-			camPos.y += 500 * dt;
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) //cam control
+			camPos.y += 500 * dt / zoom;
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			camPos.y -= 500 * dt;
+			camPos.y -= 500 * dt / zoom;
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			camPos.x += 500 * dt;
+			camPos.x += 500 * dt / zoom;
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-			camPos.x -= 500 * dt;
+			camPos.x -= 500 * dt / zoom;
 
+		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window))/zoom - camPos
+			- (sf::Vector2f(window.getSize())/2.f)/zoom;
+
+		//cout << mousePos.x << " " << mousePos.y << endl;
 
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
+			sf::Vector2f pPos = particles[i].GetPos();
+			particles[i].addForce(sf::Vector2f(mousePos - pPos) * 10000.f / pow( Dist(mousePos, pPos), 2) );
 			particles[i].updatePos(dt);
+
+			particles[i].clearForces();
 		}
 
 		//draw
