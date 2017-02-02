@@ -75,10 +75,20 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//update
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) //zoom control
 			zoom += zoom*dt;
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 			zoom -= zoom*dt;
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+			camPos.y += 500 * dt;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+			camPos.y -= 500 * dt;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+			camPos.x += 500 * dt;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+			camPos.x -= 500 * dt;
+
 
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
@@ -98,8 +108,8 @@ int main()
 
 		glPushMatrix(); //create a temp matrix to draw from
 
-		//glTranslatef(window.getSize().x / 2.f, window.getSize().y / 2.f, 0); //center the camera to the middle on the window
-		glScaled(zoom, zoom, zoom); //apply zoom
+		glTranslatef(window.getSize().x / 2.f, window.getSize().y / 2.f, 0); //center the camera to the middle on the window 
+		glScaled(zoom, zoom, zoom); //apply zoom around the center of the window
 
 		glTranslatef(camPos.x, camPos.y, 0); // apply the camPos shift
 
