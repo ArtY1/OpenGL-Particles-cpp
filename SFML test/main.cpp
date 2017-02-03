@@ -6,8 +6,8 @@
 #include "Particle.h"
 #include "Utils.h"
 
-#define PARRAYHEIGHT 100 //width of the array of particles
-#define PARRAYWIDTH 100 //height of the array of particles
+#define PARRAYHEIGHT 70 //width of the array of particles
+#define PARRAYWIDTH 70 //height of the array of particles
 
 #define INITIAL_POS_X 0
 #define INITIAL_POS_Y 0
@@ -44,6 +44,8 @@ int main()
 
 	sf::Clock deltaTime; // to keep track of updates ( = dt)
 	float dt = 0.0000001; // init (dt = 1/framerat)
+
+	sf::Vector2f massiveObject; // will be able to place with LMB click
 
 	//OpenGL draw setup
 	float vertexCoords[2 * PARRAYHEIGHT * PARRAYWIDTH]; //a static coord array eg [1x, 1y, 2x, 2y, ..., nx, ny]
@@ -92,25 +94,44 @@ int main()
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 			camPos.x -= 500 * dt / zoom;
 
+		
+
 		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window))/zoom - camPos
 			- (sf::Vector2f(window.getSize())/2.f)/zoom;
-
 		//cout << mousePos.x << " " << mousePos.y << endl;
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) //add massiveObject on LMB click
+			massiveObject = mousePos;
+
+		float maxAcc = 0.f; // maximum acceleration/focre on a particle at a given time
 
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
 			sf::Vector2f pPos = particles[i].GetPos();
-			particles[i].addForce(sf::Vector2f(mousePos - pPos) * 10000.f / pow( Dist(mousePos, pPos), 2) );
+			particles[i].addForce( 10000.f * sf::Vector2f(mousePos - pPos) / float(pow( Dist(mousePos, pPos), 2))
+				+ 0.00001f * sf::Vector2f(mousePos - pPos) ); // gravity to mouse 
+					//+ some constatnt force towards the mouse so we don't lose particles
+			if (massiveObject.x != 0.f && massiveObject.y != 0.f) // if massive obvect is placed
+				particles[i].addForce(sf::Vector2f(massiveObject - pPos) * 11000.f // gravity to the massive object
+					/ float(pow(Dist(massiveObject, pPos), 2)) );
+						
+
 			particles[i].updatePos(dt);
 
-			particles[i].clearForces();
+
+			if (Norm(particles[i].getAcc()) > maxAcc) // find the maximum force/acceleration on a particle
+				maxAcc = Norm(particles[i].getAcc());
+
+
+
+			particles[i].clearForces(); // clear the forces after the position has been updated
 		}
 
 		//draw
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
 			colours[3 * i] = 255;
-			colours[3 * i + 1] = 255;
+			colours[3 * i + 1] = 225 - int(150.f * Norm(particles[i].getAcc()) / maxAcc); // colour based on the relative acceleration
 			colours[3 * i + 2] = 255;
 
 			vertexCoords[2 * i] = particles[i].GetPos().x;

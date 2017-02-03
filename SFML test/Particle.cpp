@@ -96,14 +96,21 @@ void Particle::setUnfreeze()
 	m_frozen = false;
 }
 
+bool Particle::getFreeze(void)
+{
+	return m_frozen;
+}
+
 // Methods
 void Particle::updatePos(const float& dt)
 {
 	sf::Vector2f _prevPos = m_pos;
+	m_acc = getTotalForce() / m_mass;
 
 	//Assuming a(t+dt) = a(t) and integrating wrt dt gives v(t+dt) = a(t)*dt + v(t) integrating again gives;
 	// x(t+dt) = x(t) + v(t)*dt + 0.5*a(t)*dt*dt
-	m_pos = m_pos + m_vel * dt + 0.5f * (getTotalForce() / m_mass) * float(pow(dt, 2));
+	
+	m_pos = m_pos + m_vel * dt + 0.5f * m_acc * float(pow(dt, 2));
 	m_vel = (m_pos - _prevPos) / dt;
 }
 
