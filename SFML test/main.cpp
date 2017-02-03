@@ -87,9 +87,15 @@ int main()
 
 		//update
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) //zoom control
+		{
 			zoom += zoom*dt;
+			camPos -= (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
+		}
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+		{
 			zoom -= zoom*dt;
+			camPos += (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
+		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) //cam control
 			camPos.y += 500 * dt / zoom;
@@ -102,8 +108,8 @@ int main()
 
 
 
-		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window)) / zoom - camPos
-			- (sf::Vector2f(window.getSize()) / 2.f) / zoom; // mpouse position in the game coordinates
+		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window)) / zoom - camPos;
+			// mouse position in the game coordinates
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) //on LMB click
 			massiveObject = mousePos; // place massive object
@@ -126,6 +132,7 @@ int main()
 		}
 
 		//draw
+		// we are going to manipulate the coordinate's of the particles themself to fake the camera movment
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
 			colours[3 * i] = 255;
@@ -138,9 +145,7 @@ int main()
 
 		glPushMatrix(); //create a temp matrix to draw from
 
-		glTranslatef(window.getSize().x / 2.f, window.getSize().y / 2.f, 0); //make the center of the screen the origin 
-
-		glScaled(zoom, zoom, zoom); //apply zoom around the center of the window
+		glScaled(zoom, zoom, zoom); //apply zoom
 
 		glTranslatef(camPos.x, camPos.y, 0); // apply the camPos shift
 
