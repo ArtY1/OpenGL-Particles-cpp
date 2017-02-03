@@ -11,7 +11,7 @@
 
 #define INITIAL_POS_X 0
 #define INITIAL_POS_Y 0
-#define SPREAD 6 //distance between 2 particles next to each other
+#define SPREAD 3 //distance between 2 particles next to each other
 
 using namespace std;
 
@@ -25,7 +25,7 @@ int main()
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity(); glOrtho(0, window.getSize().x, window.getSize().y, 0, -1, 1);
 
-	sf::Vector2f camPos(0.f, 0.f); // cam controled with WASD keys
+	sf::Vector2f camPos(-0.5f * window.getSize().x,-0.5f * window.getSize().y); // cam controled with WASD keys
 	float zoom = 1.f; // zoom controlled with R and F keys
 
 	vector<Particle> particles; //instances of all particles
@@ -46,6 +46,7 @@ int main()
 	float dt = 0.0000001f; // init (dt = 1/framerat)
 
 	sf::Vector2f massiveObject; // will be able to place with LMB click
+	sf::Vector2f repulsiveObject; // will be able to place with RMB click
 
 	//OpenGL draw setup
 	// Note we alocate both arrays on the heap to prevent stack overflow
@@ -89,30 +90,33 @@ int main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::R)) //zoom control
 		{
 			zoom += zoom*dt;
-			camPos -= (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
+			camPos += (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
 		}
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
 		{
 			zoom -= zoom*dt;
-			camPos += (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
+			camPos -= (sf::Vector2f(sf::Mouse::getPosition(window))*dt/zoom); //zoom around mouse pos
 		}
 
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) //cam control
-			camPos.y += 500 * dt / zoom;
+			camPos.y -= 500 * dt / zoom; //remember we set up our orth matrix st y is increasing down the screen
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-			camPos.y -= 500 * dt / zoom;
+			camPos.y += 500 * dt / zoom;
 		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-			camPos.x += 500 * dt / zoom;
-		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 			camPos.x -= 500 * dt / zoom;
+		else if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+			camPos.x += 500 * dt / zoom;
 
 
 
-		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window)) / zoom - camPos;
+		sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window)) / zoom + camPos;
 			// mouse position in the game coordinates
 
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) //on LMB click
 			massiveObject = mousePos; // place massive object
+
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+			repulsiveObject = mousePos;
 
 		for (unsigned i = 0; i < PARRAYHEIGHT * PARRAYWIDTH; ++i)
 		{
@@ -121,9 +125,13 @@ int main()
 			particles[i].addForce(10000.f * sf::Vector2f(mousePos - pPos) / pow(Dist(mousePos, pPos), 2)
 				+ 0.00001f * sf::Vector2f(mousePos - pPos)); // gravity to mouse 
 					//+ some constatnt force towards the mouse so we don't lose particles
-			if (massiveObject.x != 0.f && massiveObject.y != 0.f) // if massive obvect is placed
+			if (massiveObject.x != 0.f) // if massive obvect is placed
 				particles[i].addForce(sf::Vector2f(massiveObject - pPos) * 11000.f // gravity to the massive object
 					/ float(pow(Dist(massiveObject, pPos), 2)));
+
+			if (repulsiveObject.x != 0.f) // if repulsive obvect is placed
+				particles[i].addForce(sf::Vector2f(repulsiveObject - pPos) * -20000.f // repulsion from repulsive object
+					/ float(pow(Dist(repulsiveObject, pPos), 2.2)));
 
 
 			particles[i].updatePos(dt);
@@ -143,11 +151,11 @@ int main()
 			vertexCoords[2 * i + 1] = particles[i].GetPos().y;
 		}
 
-		glPushMatrix(); //create a temp matrix to draw from
+		glPushMatrix(); //create a matrix to draw
 
 		glScaled(zoom, zoom, zoom); //apply zoom
 
-		glTranslatef(camPos.x, camPos.y, 0); // apply the camPos shift
+		glTranslatef(-camPos.x, -camPos.y, 0); // apply the camPos shift remember we are faking it => -1* camPos
 
 		glEnableClientState(GL_VERTEX_ARRAY); // state rendering method
 		glEnableClientState(GL_COLOR_ARRAY);
